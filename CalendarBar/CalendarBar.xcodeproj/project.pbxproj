@@ -1,0 +1,358 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000000000000000000001 /* CalendarBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* CalendarBarApp.swift */; };
+		A10000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* ContentView.swift */; };
+		A10000000000000000000003 /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* AuthView.swift */; };
+		A10000000000000000000004 /* EventsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* EventsListView.swift */; };
+		A10000000000000000000005 /* EventDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* EventDetailView.swift */; };
+		A10000000000000000000016 /* LinkDetectingText.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000016 /* LinkDetectingText.swift */; };
+		A10000000000000000000006 /* CalendarEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* CalendarEvent.swift */; };
+		A10000000000000000000007 /* AccountSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* AccountSettings.swift */; };
+		A10000000000000000000008 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* KeychainService.swift */; };
+		A10000000000000000000009 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* SettingsStore.swift */; };
+		A1000000000000000000000B /* ExchangeClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000B /* ExchangeClient.swift */; };
+		A1000000000000000000000F /* WBXMLCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* WBXMLCodec.swift */; };
+		A10000000000000000000010 /* ActiveSyncParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* ActiveSyncParser.swift */; };
+		A10000000000000000000011 /* ActiveSyncClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000014 /* ActiveSyncClient.swift */; };
+		A1000000000000000000000C /* CalendarSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000C /* CalendarSyncService.swift */; };
+		A1000000000000000000000D /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000D /* NotificationService.swift */; };
+		A10000000000000000000014 /* StatusBarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000019 /* StatusBarManager.swift */; };
+		A10000000000000000000013 /* ActiveSyncSyncKeyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000018 /* ActiveSyncSyncKeyStore.swift */; };
+		A10000000000000000000012 /* RecurrenceExpander.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000017 /* RecurrenceExpander.swift */; };
+		A10000000000000000000018 /* DayTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000021 /* DayTimelineView.swift */; };
+		A10000000000000000000017 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000020 /* AboutView.swift */; };
+		A1000000000000000000001B /* PopoverMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000024 /* PopoverMetrics.swift */; };
+		A1000000000000000000000E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000E /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A20000000000000000000001 /* CalendarBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarBarApp.swift; sourceTree = "<group>"; };
+		A20000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A20000000000000000000003 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
+		A20000000000000000000004 /* EventsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsListView.swift; sourceTree = "<group>"; };
+		A20000000000000000000005 /* EventDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventDetailView.swift; sourceTree = "<group>"; };
+		A20000000000000000000016 /* LinkDetectingText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkDetectingText.swift; sourceTree = "<group>"; };
+		A20000000000000000000006 /* CalendarEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarEvent.swift; sourceTree = "<group>"; };
+		A20000000000000000000007 /* AccountSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSettings.swift; sourceTree = "<group>"; };
+		A20000000000000000000008 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		A20000000000000000000009 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		A2000000000000000000000B /* ExchangeClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeClient.swift; sourceTree = "<group>"; };
+		A20000000000000000000012 /* WBXMLCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WBXMLCodec.swift; sourceTree = "<group>"; };
+		A20000000000000000000013 /* ActiveSyncParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveSyncParser.swift; sourceTree = "<group>"; };
+		A20000000000000000000014 /* ActiveSyncClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveSyncClient.swift; sourceTree = "<group>"; };
+		A2000000000000000000000C /* CalendarSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarSyncService.swift; sourceTree = "<group>"; };
+		A2000000000000000000000D /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		A20000000000000000000019 /* StatusBarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarManager.swift; sourceTree = "<group>"; };
+		A20000000000000000000018 /* ActiveSyncSyncKeyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveSyncSyncKeyStore.swift; sourceTree = "<group>"; };
+		A20000000000000000000017 /* RecurrenceExpander.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecurrenceExpander.swift; sourceTree = "<group>"; };
+		A20000000000000000000021 /* DayTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayTimelineView.swift; sourceTree = "<group>"; };
+		A20000000000000000000024 /* PopoverMetrics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverMetrics.swift; sourceTree = "<group>"; };
+		A20000000000000000000020 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		A2000000000000000000000E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A2000000000000000000000F /* CalendarBar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CalendarBar.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A20000000000000000000010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A20000000000000000000011 /* CalendarBar.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CalendarBar.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A30000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A40000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				A40000000000000000000002 /* CalendarBar */,
+				A40000000000000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A40000000000000000000002 /* CalendarBar */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000001 /* CalendarBarApp.swift */,
+				A20000000000000000000019 /* StatusBarManager.swift */,
+				A20000000000000000000024 /* PopoverMetrics.swift */,
+				A40000000000000000000004 /* Models */,
+				A40000000000000000000005 /* Services */,
+				A40000000000000000000006 /* Views */,
+				A2000000000000000000000E /* Assets.xcassets */,
+				A20000000000000000000010 /* Info.plist */,
+				A20000000000000000000011 /* CalendarBar.entitlements */,
+			);
+			path = CalendarBar;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A2000000000000000000000F /* CalendarBar.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000004 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000006 /* CalendarEvent.swift */,
+				A20000000000000000000007 /* AccountSettings.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000005 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000008 /* KeychainService.swift */,
+				A20000000000000000000009 /* SettingsStore.swift */,
+				A40000000000000000000007 /* ActiveSync */,
+				A2000000000000000000000B /* ExchangeClient.swift */,
+				A2000000000000000000000C /* CalendarSyncService.swift */,
+				A2000000000000000000000D /* NotificationService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000007 /* ActiveSync */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000012 /* WBXMLCodec.swift */,
+				A20000000000000000000013 /* ActiveSyncParser.swift */,
+				A20000000000000000000014 /* ActiveSyncClient.swift */,
+				A20000000000000000000017 /* RecurrenceExpander.swift */,
+				A20000000000000000000018 /* ActiveSyncSyncKeyStore.swift */,
+			);
+			path = ActiveSync;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000006 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000002 /* ContentView.swift */,
+				A20000000000000000000003 /* AuthView.swift */,
+				A20000000000000000000004 /* EventsListView.swift */,
+				A20000000000000000000005 /* EventDetailView.swift */,
+				A20000000000000000000020 /* AboutView.swift */,
+				A20000000000000000000021 /* DayTimelineView.swift */,
+				A20000000000000000000016 /* LinkDetectingText.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A50000000000000000000001 /* CalendarBar */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A70000000000000000000003 /* Build configuration list for PBXNativeTarget "CalendarBar" */;
+			buildPhases = (
+				A60000000000000000000001 /* Sources */,
+				A30000000000000000000001 /* Frameworks */,
+				A60000000000000000000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CalendarBar;
+			productName = CalendarBar;
+			productReference = A2000000000000000000000F /* CalendarBar.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A80000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					A50000000000000000000001 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = A70000000000000000000001 /* Build configuration list for PBXProject "CalendarBar" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = ru;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				ru,
+			);
+			mainGroup = A40000000000000000000001;
+			productRefGroup = A40000000000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A50000000000000000000001 /* CalendarBar */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A60000000000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000000000000000000000E /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A60000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000001 /* CalendarBarApp.swift in Sources */,
+				A10000000000000000000014 /* StatusBarManager.swift in Sources */,
+				A10000000000000000000002 /* ContentView.swift in Sources */,
+				A10000000000000000000003 /* AuthView.swift in Sources */,
+				A10000000000000000000004 /* EventsListView.swift in Sources */,
+				A10000000000000000000005 /* EventDetailView.swift in Sources */,
+				A10000000000000000000017 /* AboutView.swift in Sources */,
+				A10000000000000000000018 /* DayTimelineView.swift in Sources */,
+				A10000000000000000000016 /* LinkDetectingText.swift in Sources */,
+				A10000000000000000000006 /* CalendarEvent.swift in Sources */,
+				A10000000000000000000007 /* AccountSettings.swift in Sources */,
+				A10000000000000000000008 /* KeychainService.swift in Sources */,
+				A10000000000000000000009 /* SettingsStore.swift in Sources */,
+				A1000000000000000000000B /* ExchangeClient.swift in Sources */,
+				A1000000000000000000000F /* WBXMLCodec.swift in Sources */,
+				A10000000000000000000010 /* ActiveSyncParser.swift in Sources */,
+				A10000000000000000000011 /* ActiveSyncClient.swift in Sources */,
+				A10000000000000000000012 /* RecurrenceExpander.swift in Sources */,
+				A10000000000000000000013 /* ActiveSyncSyncKeyStore.swift in Sources */,
+				A1000000000000000000000C /* CalendarSyncService.swift in Sources */,
+				A1000000000000000000000D /* NotificationService.swift in Sources */,
+				A1000000000000000000001B /* PopoverMetrics.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A90000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A90000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		A90000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = CalendarBar/CalendarBar.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CalendarBar/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.organization.CalendarBar;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A90000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = CalendarBar/CalendarBar.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CalendarBar/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.organization.CalendarBar;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A70000000000000000000001 /* Build configuration list for PBXProject "CalendarBar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A90000000000000000000001 /* Debug */,
+				A90000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A70000000000000000000003 /* Build configuration list for PBXNativeTarget "CalendarBar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A90000000000000000000003 /* Debug */,
+				A90000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A80000000000000000000001 /* Project object */;
+}

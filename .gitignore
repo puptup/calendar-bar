@@ -1,0 +1,42 @@
+# Xcode build output
+CalendarBar/build/
+build/
+DerivedData/
+
+# Xcode user-specific data
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+xcuserdata/
+
+# Archives & export
+*.xcarchive
+export/
+
+# Debug symbols
+*.dSYM
+*.dSYM.zip
+
+# Swift Package Manager
+.build/
+Packages/
+Package.pins
+Package.resolved
+*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Secrets / local env
+.env
+.env.*
+*.local
+
+# IDE
+.idea/
+*.swp
+*~
