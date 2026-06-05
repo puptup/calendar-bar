@@ -173,10 +173,12 @@ struct DayTimelineView: View {
 
             TimelineEventBlock(
                 event: layout.event,
-                minHeight: minEventHeight,
+                day: day,
+                blockHeight: eventHeight(for: layout.event),
                 isSelected: selectedEventId == layout.event.id
             )
                 .frame(width: colWidth, height: eventHeight(for: layout.event), alignment: .topLeading)
+                .clipped()
                 .offset(x: x, y: eventYOffset(for: layout.event) + timelineTopInset)
                 .onTapGesture { toggleSelection(layout.event) }
         }
@@ -188,7 +190,7 @@ struct DayTimelineView: View {
            let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart),
            now >= dayStart,
            now < dayEnd {
-            let y = CGFloat(minutesFromMidnight(now) - gridStartHour * 60) / 60 * hourHeight
+            let y = minutesFromMidnight(on: day, date: now) / 60 * hourHeight
             HStack(spacing: 3) {
                 Text(timeLabel(for: now))
                     .font(.caption2.weight(.semibold))
@@ -243,20 +245,36 @@ struct DayTimelineView: View {
         return formatter.string(from: date)
     }
 
-    private func minutesFromMidnight(_ date: Date) -> Int {
-        let components = calendar.dateComponents([.hour, .minute], from: date)
-        return (components.hour ?? 0) * 60 + (components.minute ?? 0)
+    private func minutesFromMidnight(on viewDay: Date, date: Date) -> CGFloat {
+        let dayStart = calendar.startOfDay(for: viewDay)
+        return CGFloat(date.timeIntervalSince(dayStart) / 60)
+    }
+
+    private func visibleTimeRange(for event: CalendarEvent) -> (start: CGFloat, end: CGFloat) {
+        let dayStart = calendar.startOfDay(for: day)
+        guard let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) else {
+            let start = minutesFromMidnight(on: day, date: event.startDate)
+            let end = start + CGFloat(event.endDate.timeIntervalSince(event.startDate) / 60)
+            return (start, end)
+        }
+        let visibleStart = max(event.startDate, dayStart)
+        let visibleEnd = min(event.endDate, dayEnd)
+        return (
+            minutesFromMidnight(on: day, date: visibleStart),
+            minutesFromMidnight(on: day, date: visibleEnd)
+        )
     }
 
     private func eventYOffset(for event: CalendarEvent) -> CGFloat {
-        let startMinutes = minutesFromMidnight(event.startDate)
-        let offsetMinutes = startMinutes - gridStartHour * 60
-        return CGFloat(offsetMinutes) / 60 * hourHeight
+        let range = visibleTimeRange(for: event)
+        return range.start / 60 * hourHeight
     }
 
     private func eventHeight(for event: CalendarEvent) -> CGFloat {
-        let durationMinutes = max(15, Int(event.endDate.timeIntervalSince(event.startDate) / 60))
-        return max(minEventHeight, CGFloat(durationMinutes) / 60 * hourHeight - 2)
+        let range = visibleTimeRange(for: event)
+        let durationMinutes = max(0, range.end - range.start)
+        let proportional = durationMinutes / 60 * hourHeight
+        return max(minEventHeight, proportional)
     }
 
     private func scrollToAnchor(proxy: ScrollViewProxy) {
@@ -372,33 +390,43 @@ private struct AllDayEventChip: View {
 
 private struct TimelineEventBlock: View {
     let event: CalendarEvent
-    let minHeight: CGFloat
+    let day: Date
+    let blockHeight: CGFloat
     var isSelected: Bool = false
 
+    private var showsLocation: Bool {
+        blockHeight >= 36
+    }
+
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(alignment: .top, spacing: 0) {
             RoundedRectangle(cornerRadius: 2)
                 .fill(eventColor)
                 .frame(width: 3)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(event.subject)
-                    .font(.caption.weight(.semibold))
-                    .lineLimit(2)
-                Text(event.durationText)
+            HStack(alignment: .top, spacing: 4) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(event.subject)
+                        .font(.caption.weight(.semibold))
+                        .lineLimit(blockHeight >= 44 ? 2 : 1)
+                    if showsLocation, let location = event.location, !location.isEmpty {
+                        Text(location)
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                            .lineLimit(1)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Text(timeLabel)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
+                    .monospacedDigit()
                     .lineLimit(1)
-                if let location = event.location, !location.isEmpty, minHeight > 36 {
-                    Text(location)
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                        .lineLimit(1)
-                }
+                    .layoutPriority(1)
             }
             .padding(.horizontal, 6)
             .padding(.vertical, 4)
-            Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(eventColor.opacity(0.18))
@@ -408,6 +436,20 @@ private struct TimelineEventBlock: View {
                 .strokeBorder(isSelected ? eventColor : eventColor.opacity(0.35), lineWidth: isSelected ? 2 : 0.5)
         )
         .opacity(isSelected ? 1 : 0.92)
+    }
+
+    private var timeLabel: String {
+        let calendar = Calendar.current
+        let dayStart = calendar.startOfDay(for: day)
+        guard let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) else {
+            return event.durationText
+        }
+        let visibleStart = max(event.startDate, dayStart)
+        let visibleEnd = min(event.endDate, dayEnd)
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.dateFormat = "HH:mm"
+        return "\(formatter.string(from: visibleStart))–\(formatter.string(from: visibleEnd))"
     }
 
     private var eventColor: Color {
