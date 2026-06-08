@@ -136,6 +136,11 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
         )
     }
 
+    func cancelAllPendingNotifications() {
+        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+        scheduledCount = 0
+    }
+
     // MARK: - UNUserNotificationCenterDelegate
 
     func userNotificationCenter(

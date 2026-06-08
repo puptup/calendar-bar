@@ -29,6 +29,7 @@
 		A10000000000000000000018 /* DayTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000021 /* DayTimelineView.swift */; };
 		A10000000000000000000017 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000020 /* AboutView.swift */; };
 		A1000000000000000000001B /* PopoverMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000024 /* PopoverMetrics.swift */; };
+		A1000000000000000000001C /* LaunchAtLoginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000025 /* LaunchAtLoginService.swift */; };
 		A1000000000000000000000E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000E /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -54,6 +55,7 @@
 		A20000000000000000000017 /* RecurrenceExpander.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecurrenceExpander.swift; sourceTree = "<group>"; };
 		A20000000000000000000021 /* DayTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayTimelineView.swift; sourceTree = "<group>"; };
 		A20000000000000000000024 /* PopoverMetrics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverMetrics.swift; sourceTree = "<group>"; };
+		A20000000000000000000025 /* LaunchAtLoginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginService.swift; sourceTree = "<group>"; };
 		A20000000000000000000020 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		A2000000000000000000000E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A2000000000000000000000F /* CalendarBar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CalendarBar.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -122,6 +124,7 @@
 				A2000000000000000000000B /* ExchangeClient.swift */,
 				A2000000000000000000000C /* CalendarSyncService.swift */,
 				A2000000000000000000000D /* NotificationService.swift */,
+				A20000000000000000000025 /* LaunchAtLoginService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -244,6 +247,7 @@
 				A1000000000000000000000C /* CalendarSyncService.swift in Sources */,
 				A1000000000000000000000D /* NotificationService.swift in Sources */,
 				A1000000000000000000001B /* PopoverMetrics.swift in Sources */,
+				A1000000000000000000001C /* LaunchAtLoginService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

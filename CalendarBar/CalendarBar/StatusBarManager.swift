@@ -89,6 +89,7 @@ final class StatusBarManager: NSObject, NSPopoverDelegate {
     }
 
     func popoverDidShow(_ notification: Notification) {
+        SettingsStore.shared.refreshLaunchAtLoginStatus()
         NotificationCenter.default.post(name: .timelineScrollRequested, object: nil)
     }
 
@@ -169,6 +170,7 @@ final class StatusBarManager: NSObject, NSPopoverDelegate {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        SettingsStore.shared.applyLaunchAtLoginPreference()
         StatusBarManager.shared.install()
         _ = CalendarSyncService.shared
         Task {
@@ -179,5 +181,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         CalendarSyncService.shared.stopPeriodicSync()
+        NotificationService.shared.cancelAllPendingNotifications()
     }
 }

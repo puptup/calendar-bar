@@ -182,6 +182,11 @@ struct EventsListView: View {
                     }
                 }
                 Divider()
+                Toggle("Запускать при входе", isOn: Binding(
+                    get: { store.launchAtLogin },
+                    set: { store.setLaunchAtLogin($0) }
+                ))
+                Divider()
                 Button("О приложении") {
                     showAbout = true
                 }

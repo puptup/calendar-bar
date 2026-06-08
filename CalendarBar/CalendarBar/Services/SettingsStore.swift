@@ -10,6 +10,7 @@ final class SettingsStore: ObservableObject {
         static let isLoggedIn = "isLoggedIn"
         static let syncInterval = "syncIntervalMinutes"
         static let notifyMinutes = "notifyMinutesBefore"
+        static let launchAtLogin = "launchAtLogin"
     }
 
     @Published var account: AccountSettings {
@@ -28,6 +29,8 @@ final class SettingsStore: ObservableObject {
         didSet { UserDefaults.standard.set(notifyMinutesBefore, forKey: Keys.notifyMinutes) }
     }
 
+    @Published private(set) var launchAtLogin = false
+
     private init() {
         if let data = UserDefaults.standard.data(forKey: Keys.account),
            var decoded = try? JSONDecoder().decode(AccountSettings.self, from: data) {
@@ -41,6 +44,27 @@ final class SettingsStore: ObservableObject {
         isLoggedIn = UserDefaults.standard.bool(forKey: Keys.isLoggedIn)
         syncIntervalMinutes = UserDefaults.standard.object(forKey: Keys.syncInterval) as? Int ?? 5
         notifyMinutesBefore = UserDefaults.standard.object(forKey: Keys.notifyMinutes) as? Int ?? 15
+        launchAtLogin = UserDefaults.standard.object(forKey: Keys.launchAtLogin) as? Bool ?? false
+    }
+
+    func refreshLaunchAtLoginStatus() {
+        launchAtLogin = LaunchAtLoginService.isEnabled
+    }
+
+    func setLaunchAtLogin(_ enabled: Bool) {
+        do {
+            try LaunchAtLoginService.setEnabled(enabled)
+            launchAtLogin = LaunchAtLoginService.isEnabled
+            UserDefaults.standard.set(launchAtLogin, forKey: Keys.launchAtLogin)
+        } catch {
+            launchAtLogin = LaunchAtLoginService.isEnabled
+        }
+    }
+
+    func applyLaunchAtLoginPreference() {
+        let preferred = UserDefaults.standard.object(forKey: Keys.launchAtLogin) as? Bool ?? false
+        LaunchAtLoginService.applyStoredPreference(preferred)
+        launchAtLogin = LaunchAtLoginService.isEnabled
     }
 
     private func saveAccount() {
