@@ -175,6 +175,7 @@ struct DayTimelineView: View {
 
             TimelineEventBlock(
                 title: layout.displayTitle,
+                timeLabel: layoutTimeText(for: layout),
                 blockHeight: blockHeight,
                 accentColor: layout.blockColor,
                 isAggregate: layout.isAggregate,
@@ -212,6 +213,26 @@ struct DayTimelineView: View {
         let durationMinutes = max(0, range.end - range.start)
         let proportional = durationMinutes / 60 * hourHeight
         return max(minEventHeight, proportional)
+    }
+
+    private func layoutTimeText(for layout: TimedEventLayout) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.dateFormat = "HH:mm"
+
+        if let aggregated = layout.aggregatedEvents {
+            guard let start = aggregated.map(\.startDate).min(),
+                  let end = aggregated.map(\.endDate).max() else { return "" }
+            return "\(formatter.string(from: start))–\(formatter.string(from: end))"
+        }
+
+        let dayStart = calendar.startOfDay(for: day)
+        guard let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) else {
+            return layout.event.durationText
+        }
+        let visibleStart = max(layout.event.startDate, dayStart)
+        let visibleEnd = min(layout.event.endDate, dayEnd)
+        return "\(formatter.string(from: visibleStart))–\(formatter.string(from: visibleEnd))"
     }
 
     private func toggleSelection(_ layout: TimedEventLayout) {
@@ -487,6 +508,7 @@ private struct AllDayEventChip: View {
 
 private struct TimelineEventBlock: View {
     let title: String
+    let timeLabel: String
     let blockHeight: CGFloat
     let accentColor: Color
     var isAggregate: Bool = false
@@ -494,9 +516,10 @@ private struct TimelineEventBlock: View {
 
     private let lineHeight: CGFloat = 12
     private let verticalPadding: CGFloat = 8
+    private let timeBandHeight: CGFloat = 10
 
     private var subjectLineLimit: Int {
-        let available = max(0, blockHeight - verticalPadding)
+        let available = max(0, blockHeight - verticalPadding - timeBandHeight)
         return max(1, Int(available / lineHeight))
     }
 
@@ -506,13 +529,24 @@ private struct TimelineEventBlock: View {
                 .fill(accentColor)
                 .frame(width: 3)
 
-            Text(title)
-                .font(isAggregate ? .caption.weight(.bold) : .caption.weight(.semibold))
-                .lineLimit(subjectLineLimit)
-                .truncationMode(.tail)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 4)
+            ZStack(alignment: .bottomTrailing) {
+                Text(title)
+                    .font(isAggregate ? .caption.weight(.bold) : .caption.weight(.semibold))
+                    .lineLimit(subjectLineLimit)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .padding(.horizontal, 6)
+                    .padding(.top, 4)
+                    .padding(.bottom, timeBandHeight)
+
+                Text(timeLabel)
+                    .font(.system(size: 9))
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .padding(.horizontal, 6)
+                    .padding(.bottom, 2)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(accentColor.opacity(isAggregate ? 0.24 : 0.18))
