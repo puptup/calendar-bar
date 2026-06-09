@@ -1,5 +1,60 @@
 import SwiftUI
 
+struct AggregatedEventsSidePanel: View {
+    let events: [CalendarEvent]
+    var onSelect: (CalendarEvent) -> Void
+    var onClose: () -> Void
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top, spacing: 8) {
+                    Text(TimedEventLayout.meetingsLabel(count: events.count))
+                        .font(.headline)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Button(action: onClose) {
+                        Image(systemName: "xmark")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24, height: 24)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                ForEach(events) { event in
+                    Button(action: { onSelect(event) }) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(event.subject)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.primary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            Text(timeText(for: event))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .padding(10)
+                        .background(Color.primary.opacity(0.06))
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(maxHeight: .infinity)
+    }
+
+    private func timeText(for event: CalendarEvent) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.dateFormat = "HH:mm"
+        return "\(formatter.string(from: event.startDate))–\(formatter.string(from: event.endDate))"
+    }
+}
+
 struct EventDetailSidePanel: View {
     let event: CalendarEvent
     var onClose: () -> Void

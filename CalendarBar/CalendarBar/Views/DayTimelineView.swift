@@ -8,6 +8,7 @@ struct DayTimelineView: View {
     let day: Date
     let events: [CalendarEvent]
     @Binding var selectedEventId: String?
+    @Binding var selectedAggregateEvents: [CalendarEvent]?
 
     private let calendar = Calendar.current
     private let hourHeight: CGFloat = 52
@@ -170,17 +171,74 @@ struct DayTimelineView: View {
             let columnCount = CGFloat(max(layout.columnCount, 1))
             let colWidth = (totalWidth - columnGap * (columnCount - 1)) / columnCount
             let x = timeColumnWidth + 8 + CGFloat(layout.column) * (colWidth + columnGap)
+            let blockHeight = layoutHeight(for: layout)
 
             TimelineEventBlock(
-                event: layout.event,
-                day: day,
-                blockHeight: eventHeight(for: layout.event),
-                isSelected: selectedEventId == layout.event.id
+                title: layout.displayTitle,
+                blockHeight: blockHeight,
+                accentColor: layout.blockColor,
+                isAggregate: layout.isAggregate,
+                isSelected: isLayoutSelected(layout)
             )
-                .frame(width: colWidth, height: eventHeight(for: layout.event), alignment: .topLeading)
+                .frame(width: colWidth, height: blockHeight, alignment: .topLeading)
                 .clipped()
-                .offset(x: x, y: eventYOffset(for: layout.event) + timelineTopInset)
-                .onTapGesture { toggleSelection(layout.event) }
+                .offset(x: x, y: layoutYOffset(for: layout) + timelineTopInset)
+                .onTapGesture { toggleSelection(layout) }
+        }
+    }
+
+    private func isLayoutSelected(_ layout: TimedEventLayout) -> Bool {
+        if let aggregated = layout.aggregatedEvents {
+            guard let selected = selectedAggregateEvents else { return false }
+            return selected.map(\.id).sorted() == aggregated.map(\.id).sorted()
+        }
+        return selectedEventId == layout.event.id
+    }
+
+    private func layoutTimeRange(for layout: TimedEventLayout) -> (start: CGFloat, end: CGFloat) {
+        if let aggregated = layout.aggregatedEvents {
+            let ranges = aggregated.map { visibleTimeRange(for: $0) }
+            return (ranges.map(\.start).min() ?? 0, ranges.map(\.end).max() ?? 0)
+        }
+        return visibleTimeRange(for: layout.event)
+    }
+
+    private func layoutYOffset(for layout: TimedEventLayout) -> CGFloat {
+        layoutTimeRange(for: layout).start / 60 * hourHeight
+    }
+
+    private func layoutHeight(for layout: TimedEventLayout) -> CGFloat {
+        let range = layoutTimeRange(for: layout)
+        let durationMinutes = max(0, range.end - range.start)
+        let proportional = durationMinutes / 60 * hourHeight
+        return max(minEventHeight, proportional)
+    }
+
+    private func toggleSelection(_ layout: TimedEventLayout) {
+        if let aggregated = layout.aggregatedEvents {
+            if isLayoutSelected(layout) {
+                selectedAggregateEvents = nil
+            } else {
+                selectedEventId = nil
+                selectedAggregateEvents = aggregated
+            }
+            return
+        }
+
+        selectedAggregateEvents = nil
+        if selectedEventId == layout.event.id {
+            selectedEventId = nil
+        } else {
+            selectedEventId = layout.event.id
+        }
+    }
+
+    private func toggleSelection(_ event: CalendarEvent) {
+        selectedAggregateEvents = nil
+        if selectedEventId == event.id {
+            selectedEventId = nil
+        } else {
+            selectedEventId = event.id
         }
     }
 
@@ -208,14 +266,6 @@ struct DayTimelineView: View {
             }
             .padding(.trailing, 12)
             .offset(y: y + timelineTopInset)
-        }
-    }
-
-    private func toggleSelection(_ event: CalendarEvent) {
-        if selectedEventId == event.id {
-            selectedEventId = nil
-        } else {
-            selectedEventId = event.id
         }
     }
 
@@ -263,18 +313,6 @@ struct DayTimelineView: View {
             minutesFromMidnight(on: day, date: visibleStart),
             minutesFromMidnight(on: day, date: visibleEnd)
         )
-    }
-
-    private func eventYOffset(for event: CalendarEvent) -> CGFloat {
-        let range = visibleTimeRange(for: event)
-        return range.start / 60 * hourHeight
-    }
-
-    private func eventHeight(for event: CalendarEvent) -> CGFloat {
-        let range = visibleTimeRange(for: event)
-        let durationMinutes = max(0, range.end - range.start)
-        let proportional = durationMinutes / 60 * hourHeight
-        return max(minEventHeight, proportional)
     }
 
     private func scrollToAnchor(proxy: ScrollViewProxy) {
@@ -330,6 +368,11 @@ struct DayTimelineView: View {
 
     private static func layoutOverlapCluster(_ events: [CalendarEvent]) -> [TimedEventLayout] {
         let sorted = events.sorted { $0.startDate < $1.startDate }
+
+        if sorted.count >= 4 {
+            return [TimedEventLayout.aggregate(events: sorted)]
+        }
+
         var columnEnds: [Date] = []
         var assignments: [(CalendarEvent, Int)] = []
 
@@ -347,16 +390,70 @@ struct DayTimelineView: View {
 
         let columnCount = max(columnEnds.count, 1)
         return assignments.map { event, column in
-            TimedEventLayout(event: event, column: column, columnCount: columnCount)
+            TimedEventLayout.single(event: event, column: column, columnCount: columnCount)
         }
     }
 }
 
-private struct TimedEventLayout: Identifiable {
-    var id: String { event.id }
+struct TimedEventLayout: Identifiable {
+    let id: String
     let event: CalendarEvent
     let column: Int
     let columnCount: Int
+    let aggregatedEvents: [CalendarEvent]?
+
+    var isAggregate: Bool { aggregatedEvents != nil }
+
+    var displayTitle: String {
+        if let aggregatedEvents {
+            return Self.meetingsLabel(count: aggregatedEvents.count)
+        }
+        return event.subject
+    }
+
+    var blockColor: Color {
+        if isAggregate { return .accentColor }
+        switch event.responseStatus {
+        case .pending: return .orange
+        case .tentative: return .yellow
+        case .declined: return .red.opacity(0.8)
+        default: return .accentColor
+        }
+    }
+
+    static func single(event: CalendarEvent, column: Int, columnCount: Int) -> TimedEventLayout {
+        TimedEventLayout(
+            id: event.id,
+            event: event,
+            column: column,
+            columnCount: columnCount,
+            aggregatedEvents: nil
+        )
+    }
+
+    static func aggregate(events: [CalendarEvent]) -> TimedEventLayout {
+        let sorted = events.sorted { $0.startDate < $1.startDate }
+        let anchor = sorted[0]
+        let key = sorted.map(\.id).sorted().joined(separator: "-")
+        return TimedEventLayout(
+            id: "aggregate-\(key)",
+            event: anchor,
+            column: 0,
+            columnCount: 1,
+            aggregatedEvents: sorted
+        )
+    }
+
+    static func meetingsLabel(count: Int) -> String {
+        let mod10 = count % 10
+        let mod100 = count % 100
+        if (11...14).contains(mod100) { return "\(count) встреч" }
+        switch mod10 {
+        case 1: return "\(count) встреча"
+        case 2, 3, 4: return "\(count) встречи"
+        default: return "\(count) встреч"
+        }
+    }
 }
 
 private struct AllDayEventChip: View {
@@ -389,75 +486,41 @@ private struct AllDayEventChip: View {
 }
 
 private struct TimelineEventBlock: View {
-    let event: CalendarEvent
-    let day: Date
+    let title: String
     let blockHeight: CGFloat
+    let accentColor: Color
+    var isAggregate: Bool = false
     var isSelected: Bool = false
 
-    private var showsLocation: Bool {
-        blockHeight >= 36
+    private let lineHeight: CGFloat = 12
+    private let verticalPadding: CGFloat = 8
+
+    private var subjectLineLimit: Int {
+        let available = max(0, blockHeight - verticalPadding)
+        return max(1, Int(available / lineHeight))
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 0) {
+        HStack(spacing: 0) {
             RoundedRectangle(cornerRadius: 2)
-                .fill(eventColor)
+                .fill(accentColor)
                 .frame(width: 3)
 
-            HStack(alignment: .top, spacing: 4) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(event.subject)
-                        .font(.caption.weight(.semibold))
-                        .lineLimit(blockHeight >= 44 ? 2 : 1)
-                    if showsLocation, let location = event.location, !location.isEmpty {
-                        Text(location)
-                            .font(.caption2)
-                            .foregroundStyle(.tertiary)
-                            .lineLimit(1)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-                Text(timeLabel)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
-                    .lineLimit(1)
-                    .layoutPriority(1)
-            }
-            .padding(.horizontal, 6)
-            .padding(.vertical, 4)
+            Text(title)
+                .font(isAggregate ? .caption.weight(.bold) : .caption.weight(.semibold))
+                .lineLimit(subjectLineLimit)
+                .truncationMode(.tail)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 4)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(eventColor.opacity(0.18))
+        .background(accentColor.opacity(isAggregate ? 0.24 : 0.18))
         .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .strokeBorder(isSelected ? eventColor : eventColor.opacity(0.35), lineWidth: isSelected ? 2 : 0.5)
+                .strokeBorder(isSelected ? accentColor : accentColor.opacity(0.35), lineWidth: isSelected ? 2 : 0.5)
         )
         .opacity(isSelected ? 1 : 0.92)
-    }
-
-    private var timeLabel: String {
-        let calendar = Calendar.current
-        let dayStart = calendar.startOfDay(for: day)
-        guard let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) else {
-            return event.durationText
-        }
-        let visibleStart = max(event.startDate, dayStart)
-        let visibleEnd = min(event.endDate, dayEnd)
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ru_RU")
-        formatter.dateFormat = "HH:mm"
-        return "\(formatter.string(from: visibleStart))–\(formatter.string(from: visibleEnd))"
-    }
-
-    private var eventColor: Color {
-        switch event.responseStatus {
-        case .pending: return .orange
-        case .tentative: return .yellow
-        case .declined: return .red.opacity(0.8)
-        default: return .accentColor
-        }
     }
 }

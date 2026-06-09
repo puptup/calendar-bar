@@ -6,6 +6,7 @@ struct EventsListView: View {
     @ObservedObject private var store = SettingsStore.shared
     @ObservedObject private var notifications = NotificationService.shared
     @State private var selectedEventId: String?
+    @State private var selectedAggregateEvents: [CalendarEvent]?
     @State private var showAbout = false
     @State private var selectedDay = Calendar.current.startOfDay(for: Date())
 
@@ -30,11 +31,26 @@ struct EventsListView: View {
                     DayTimelineView(
                         day: selectedDay,
                         events: events(on: selectedDay),
-                        selectedEventId: $selectedEventId
+                        selectedEventId: $selectedEventId,
+                        selectedAggregateEvents: $selectedAggregateEvents
                     )
                     .frame(width: PopoverMetrics.timelineWidth)
 
-                    if let event = selectedEvent {
+                    if let aggregate = selectedAggregateEvents {
+                        Divider()
+                        AggregatedEventsSidePanel(
+                            events: aggregate,
+                            onSelect: { event in
+                                selectedAggregateEvents = nil
+                                selectedEventId = event.id
+                            },
+                            onClose: {
+                                selectedAggregateEvents = nil
+                            }
+                        )
+                        .frame(width: PopoverMetrics.detailWidth)
+                        .transaction { $0.animation = nil }
+                    } else if let event = selectedEvent {
                         Divider()
                         EventDetailSidePanel(event: event, onClose: { selectedEventId = nil })
                             .frame(width: PopoverMetrics.detailWidth)
@@ -47,6 +63,7 @@ struct EventsListView: View {
                 }
                 .onChange(of: selectedDay) { _, _ in
                     selectedEventId = nil
+                    selectedAggregateEvents = nil
                 }
             }
             Divider()
@@ -54,13 +71,14 @@ struct EventsListView: View {
         }
         .frame(width: panelWidth, height: PopoverMetrics.height)
         .background(Color.clear)
-        .animation(.easeInOut(duration: 0.2), value: selectedEventId != nil)
+        .animation(.easeInOut(duration: 0.2), value: selectedEventId != nil || selectedAggregateEvents != nil)
         .onAppear { updatePopoverSize() }
         .onChange(of: selectedEventId != nil) { _, _ in updatePopoverSize() }
+        .onChange(of: selectedAggregateEvents != nil) { _, _ in updatePopoverSize() }
     }
 
     private var panelWidth: CGFloat {
-        PopoverMetrics.totalWidth(showingDetail: selectedEventId != nil)
+        PopoverMetrics.totalWidth(showingDetail: selectedEventId != nil || selectedAggregateEvents != nil)
     }
 
     private var selectedEvent: CalendarEvent? {
@@ -69,24 +87,47 @@ struct EventsListView: View {
     }
 
     private var compactDateNavigation: some View {
-        HStack(spacing: 0) {
-            dayNavButton(
-                systemImage: "chevron.left",
-                isEnabled: canGoToPreviousDay,
-                action: goToPreviousDay
-            )
+        VStack(spacing: 2) {
+            HStack(spacing: 0) {
+                dayNavButton(
+                    systemImage: "chevron.left",
+                    isEnabled: canGoToPreviousDay,
+                    action: goToPreviousDay
+                )
 
-            Text(compactDayTitle)
-                .font(.caption.weight(.semibold))
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .frame(minWidth: 56, maxWidth: 88)
+                Text(compactDayTitle)
+                    .font(.caption.weight(.semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .frame(minWidth: 56, maxWidth: 88)
 
-            dayNavButton(
-                systemImage: "chevron.right",
-                isEnabled: true,
-                action: goToNextDay
-            )
+                dayNavButton(
+                    systemImage: "chevron.right",
+                    isEnabled: true,
+                    action: goToNextDay
+                )
+            }
+
+            if !calendar.isDateInToday(selectedDay) {
+                Button(action: goToToday) {
+                    Text("Сегодня")
+                        .font(.caption2.weight(.semibold))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 3)
+                        .frame(minWidth: 56)
+                        .contentShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.primary)
+                .background(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(Color.primary.opacity(0.06))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .strokeBorder(Color.primary.opacity(0.18), lineWidth: 1)
+                )
+            }
         }
     }
 
@@ -248,6 +289,11 @@ struct EventsListView: View {
     private func goToNextDay() {
         guard let next = calendar.date(byAdding: .day, value: 1, to: selectedDay) else { return }
         selectedDay = calendar.startOfDay(for: next)
+    }
+
+    private func goToToday() {
+        selectedDay = calendar.startOfDay(for: Date())
+        requestTimelineScroll()
     }
 
     private func requestTimelineScroll() {
