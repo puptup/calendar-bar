@@ -38,11 +38,19 @@ final class CalendarSyncService: ObservableObject {
                 }
             }
             .store(in: &cancellables)
+
+        SettingsStore.shared.$syncIntervalMinutes
+            .dropFirst()
+            .sink { [weak self] _ in
+                guard SettingsStore.shared.isLoggedIn else { return }
+                self?.startPeriodicSync()
+            }
+            .store(in: &cancellables)
     }
 
     func startPeriodicSync() {
         stopPeriodicSync()
-        let interval = TimeInterval(SettingsStore.shared.syncIntervalMinutes * 60)
+        let interval = syncInterval
         syncTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             Task { @MainActor in await self?.syncNow() }
         }
@@ -62,6 +70,11 @@ final class CalendarSyncService: ObservableObject {
         menuBarRefreshTimer = nil
     }
 
+    private var syncInterval: TimeInterval {
+        let minutes = SettingsStore.shared.syncIntervalMinutes
+        return minutes <= 0 ? 30 : TimeInterval(minutes * 60)
+    }
+
     func syncNow() async {
         let store = SettingsStore.shared
         guard store.isLoggedIn, let password = store.password else { return }
@@ -73,7 +86,7 @@ final class CalendarSyncService: ObservableObject {
         syncState = .syncing
         let account = store.account
         let accountKey = account.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        ActiveSyncSyncKeyStore.shared.reset(accountKey: accountKey)
+        ActiveSyncSyncKeyStore.shared.updateCalendar("0", accountKey: accountKey)
 
         let start = Calendar.current.startOfDay(for: Date())
         let end = Calendar.current.date(byAdding: .day, value: 60, to: start) ?? start
@@ -148,5 +161,23 @@ final class CalendarSyncService: ObservableObject {
 
     var nextEvent: CalendarEvent? {
         nextTodayUpcoming
+    }
+
+    func respond(to event: CalendarEvent, action: MeetingAction) async throws {
+        let store = SettingsStore.shared
+        guard store.isLoggedIn, let password = store.password else { return }
+        try await ExchangeClient(settings: store.account, password: password)
+            .respondToMeeting(eventId: event.id, action: action)
+        await syncNow()
+    }
+
+    func delete(_ event: CalendarEvent) async throws {
+        let store = SettingsStore.shared
+        guard store.isLoggedIn, let password = store.password else { return }
+        try await ExchangeClient(settings: store.account, password: password)
+            .deleteCalendarEvent(eventId: event.id)
+        events.removeAll { $0.id == event.id }
+        todayEvents.removeAll { $0.id == event.id }
+        await syncNow()
     }
 }

@@ -90,6 +90,23 @@ struct InboxSyncResult {
     let status: String
     let moreAvailable: Bool
     let meetingRequests: [ParsedInboxMeetingRequest]
+    let messages: [MailMessage]
+    let deletedServerIds: [String]
+}
+
+struct ItemOperationsFetchResult {
+    let status: String
+    let body: MailBody?
+    let attachments: [MailAttachment]
+    let data: Data?
+    let fileName: String?
+    let contentType: String?
+}
+
+struct CommandStatusResult {
+    let status: String
+    let syncKey: String
+    let itemStatuses: [String: String]
 }
 
 struct ParsedCalendarEvent {
@@ -237,6 +254,32 @@ func findInboxFolder(_ folders: [FolderRecord]) -> FolderRecord? {
     folders.first(where: { $0.type == "2" })
         ?? folders.first(where: { $0.displayName.trimmingCharacters(in: .whitespaces).lowercased() == "inbox" })
         ?? folders.first(where: { $0.serverId.lowercased().contains("inbox") })
+}
+
+func findSentItemsFolder(_ folders: [FolderRecord]) -> FolderRecord? {
+    folders.first(where: { $0.type == "5" })
+        ?? folders.first(where: { $0.displayName.trimmingCharacters(in: .whitespaces).lowercased().contains("sent") })
+}
+
+func findMailFolder(_ folders: [FolderRecord], kind: MailFolderKind) -> FolderRecord? {
+    switch kind {
+    case .inbox:
+        return findInboxFolder(folders)
+    case .sent:
+        return folders.first(where: { $0.type == "5" })
+            ?? folders.first(where: { matchesFolderName($0.displayName, names: ["sent", "sent items", "отправленные"]) })
+    case .drafts:
+        return folders.first(where: { $0.type == "3" })
+            ?? folders.first(where: { matchesFolderName($0.displayName, names: ["drafts", "черновики"]) })
+    case .trash:
+        return folders.first(where: { $0.type == "4" })
+            ?? folders.first(where: { matchesFolderName($0.displayName, names: ["deleted", "deleted items", "trash", "корзина", "удаленные", "удалённые"]) })
+    }
+}
+
+private func matchesFolderName(_ displayName: String, names: [String]) -> Bool {
+    let normalized = displayName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    return names.contains { normalized == $0 || normalized.contains($0) }
 }
 
 func buildFolderSyncRequestXml(syncKey: String = "0") -> String {
@@ -387,17 +430,57 @@ func normalizeCalendarEvents(_ events: [ParsedCalendarEvent]) -> [NormalizedCale
     }
 }
 
-func parseInboxSyncXml(_ xml: String) -> InboxSyncResult {
+func parseInboxSyncXml(_ xml: String, collectionIdFallback: String = "") -> InboxSyncResult {
     let collectionBlock = getAllTagBlocks(xml, "Collection").first ?? ""
+    let collectionId = getFirstTagText(collectionBlock, "CollectionId").isEmpty ? collectionIdFallback : getFirstTagText(collectionBlock, "CollectionId")
     let commandBlocks = getAllTagBlocks(collectionBlock, "Add") + getAllTagBlocks(collectionBlock, "Change")
+    let deletedBlocks = getAllTagBlocks(collectionBlock, "Delete") + getAllTagBlocks(collectionBlock, "SoftDelete")
 
     let meetingRequests = commandBlocks.compactMap(parseInboxMeetingRequest)
+    let messages = commandBlocks.compactMap { parseMailMessage($0, collectionId: collectionId) }
+    let deletedServerIds = deletedBlocks.map { getFirstTagText($0, "ServerId") }.filter { !$0.isEmpty }
 
     return InboxSyncResult(
         syncKey: getFirstTagText(collectionBlock, "SyncKey"),
         status: getFirstTagText(collectionBlock, "Status").isEmpty ? getFirstTagText(xml, "Status") : getFirstTagText(collectionBlock, "Status"),
         moreAvailable: hasSelfClosingTag(collectionBlock, "MoreAvailable"),
-        meetingRequests: meetingRequests
+        meetingRequests: meetingRequests,
+        messages: messages,
+        deletedServerIds: deletedServerIds
+    )
+}
+
+private func parseMailMessage(_ xml: String, collectionId: String) -> MailMessage? {
+    let itemStatus = getFirstTagText(xml, "Status")
+    if !itemStatus.isEmpty && itemStatus != "1" {
+        return nil
+    }
+
+    let serverId = getFirstTagText(xml, "ServerId")
+    guard !serverId.isEmpty else { return nil }
+
+    let applicationData = getAllTagBlocks(xml, "ApplicationData").first ?? ""
+    let bodyBlock = getAllTagBlocks(applicationData, "Body").first ?? ""
+    let body = parseMailBody(bodyBlock)
+
+    return MailMessage(
+        serverId: serverId,
+        collectionId: collectionId,
+        subject: getFirstTagText(applicationData, "Subject"),
+        from: parseMailAddress(getFirstTagText(applicationData, "From")),
+        to: parseMailAddressList(getFirstTagText(applicationData, "To")),
+        cc: parseMailAddressList(getFirstTagText(applicationData, "Cc")),
+        replyTo: parseMailAddressList(getFirstTagText(applicationData, "ReplyTo")),
+        dateReceived: ActiveSyncDateParser.parse(normalizeActiveSyncDateTime(getFirstTagText(applicationData, "DateReceived"))),
+        isRead: getFirstTagText(applicationData, "Read") == "1",
+        importance: getFirstTagText(applicationData, "Importance").isEmpty ? nil : getFirstTagText(applicationData, "Importance"),
+        messageClass: getFirstTagText(applicationData, "MessageClass"),
+        conversationId: getFirstTagText(applicationData, "ConversationId"),
+        conversationIndex: getFirstTagText(applicationData, "ConversationIndex"),
+        threadTopic: getFirstTagText(applicationData, "ThreadTopic"),
+        body: body,
+        preview: getFirstTagText(bodyBlock, "Preview"),
+        attachments: parseMailAttachments(applicationData)
     )
 }
 
@@ -437,6 +520,39 @@ func buildInboxSyncRequestXml(
     }
 
     return "<?xml version=\"1.0\" encoding=\"utf-8\"?><Sync xmlns=\"AirSync:\" xmlns:airsyncbase=\"AirSyncBase:\"><Collections><Collection>\(classElement)<SyncKey>\(escapeXml(syncKey))</SyncKey><CollectionId>\(escapeXml(collectionId))</CollectionId><DeletesAsMoves>0</DeletesAsMoves><GetChanges>1</GetChanges><WindowSize>\(windowSize)</WindowSize><Options><FilterType>5</FilterType><airsyncbase:BodyPreference><airsyncbase:Type>1</airsyncbase:Type><airsyncbase:TruncationSize>20000</airsyncbase:TruncationSize></airsyncbase:BodyPreference></Options></Collection></Collections></Sync>"
+}
+
+func buildInboxReadChangeRequestXml(syncKey: String, collectionId: String, serverId: String, read: Bool) -> String {
+    "<?xml version=\"1.0\" encoding=\"utf-8\"?><Sync xmlns=\"AirSync:\"><Collections><Collection><SyncKey>\(escapeXml(syncKey))</SyncKey><CollectionId>\(escapeXml(collectionId))</CollectionId><Commands><Change><ServerId>\(escapeXml(serverId))</ServerId><ApplicationData><Read xmlns=\"Email:\">\(read ? "1" : "0")</Read></ApplicationData></Change></Commands></Collection></Collections></Sync>"
+}
+
+func buildItemOperationsFetchMessageXml(collectionId: String, serverId: String, bodyType: MailBodyType = .html) -> String {
+    let typeValue = bodyType == .plain ? "1" : "2"
+    return "<?xml version=\"1.0\" encoding=\"utf-8\"?><ItemOperations xmlns=\"ItemOperations:\" xmlns:airsync=\"AirSync:\" xmlns:airsyncbase=\"AirSyncBase:\"><Fetch><Store>Mailbox</Store><airsync:CollectionId>\(escapeXml(collectionId))</airsync:CollectionId><airsync:ServerId>\(escapeXml(serverId))</airsync:ServerId><Options><airsyncbase:BodyPreference><airsyncbase:Type>\(typeValue)</airsyncbase:Type><airsyncbase:TruncationSize>0</airsyncbase:TruncationSize></airsyncbase:BodyPreference></Options></Fetch></ItemOperations>"
+}
+
+func buildItemOperationsFetchAttachmentXml(fileReference: String) -> String {
+    "<?xml version=\"1.0\" encoding=\"utf-8\"?><ItemOperations xmlns=\"ItemOperations:\" xmlns:airsyncbase=\"AirSyncBase:\"><Fetch><Store>Mailbox</Store><airsyncbase:FileReference>\(escapeXml(fileReference))</airsyncbase:FileReference></Fetch></ItemOperations>"
+}
+
+func buildSendMailRequestXml(clientId: String, mime: String) -> String {
+    "<?xml version=\"1.0\" encoding=\"utf-8\"?><SendMail xmlns=\"ComposeMail:\"><ClientId>\(escapeXml(clientId))</ClientId><SaveInSentItems/><MIME>\(escapeXml(mime))</MIME></SendMail>"
+}
+
+func buildSmartReplyRequestXml(collectionId: String, serverId: String, mime: String) -> String {
+    "<?xml version=\"1.0\" encoding=\"utf-8\"?><SmartReply xmlns=\"ComposeMail:\"><Source><FolderId>\(escapeXml(collectionId))</FolderId><ItemId>\(escapeXml(serverId))</ItemId></Source><SaveInSentItems/><MIME>\(escapeXml(mime))</MIME></SmartReply>"
+}
+
+func buildSmartForwardRequestXml(collectionId: String, serverId: String, mime: String) -> String {
+    "<?xml version=\"1.0\" encoding=\"utf-8\"?><SmartForward xmlns=\"ComposeMail:\"><Source><FolderId>\(escapeXml(collectionId))</FolderId><ItemId>\(escapeXml(serverId))</ItemId></Source><SaveInSentItems/><MIME>\(escapeXml(mime))</MIME></SmartForward>"
+}
+
+func buildMeetingResponseRequestXml(requestId: String, collectionId: String, action: MeetingAction) -> String {
+    "<?xml version=\"1.0\" encoding=\"utf-8\"?><MeetingResponse xmlns=\"MeetingResponse:\"><Request><UserResponse>\(action.responseType)</UserResponse><CollectionId>\(escapeXml(collectionId))</CollectionId><RequestId>\(escapeXml(requestId))</RequestId></Request></MeetingResponse>"
+}
+
+func buildCalendarDeleteRequestXml(syncKey: String, collectionId: String, serverId: String) -> String {
+    "<?xml version=\"1.0\" encoding=\"utf-8\"?><Sync xmlns=\"AirSync:\"><Collections><Collection><SyncKey>\(escapeXml(syncKey))</SyncKey><CollectionId>\(escapeXml(collectionId))</CollectionId><Commands><Delete><ServerId>\(escapeXml(serverId))</ServerId></Delete></Commands></Collection></Collections></Sync>"
 }
 
 func normalizeInboxMeetingRequests(_ requests: [ParsedInboxMeetingRequest]) -> [NormalizedCalendarEvent] {
@@ -506,6 +622,77 @@ func mapResponseStatus(responseType: String, meetingStatus: String) -> MeetingRe
     }
 }
 
+func parseSyncCommandStatusXml(_ xml: String) -> CommandStatusResult {
+    let collectionBlock = getAllTagBlocks(xml, "Collection").first ?? ""
+    let responseBlocks = getAllTagBlocks(collectionBlock, "Change") + getAllTagBlocks(collectionBlock, "Delete")
+    var itemStatuses: [String: String] = [:]
+    for block in responseBlocks {
+        let serverId = getFirstTagText(block, "ServerId")
+        if !serverId.isEmpty {
+            itemStatuses[serverId] = getFirstTagText(block, "Status")
+        }
+    }
+
+    return CommandStatusResult(
+        status: getFirstTagText(collectionBlock, "Status").isEmpty ? getFirstTagText(xml, "Status") : getFirstTagText(collectionBlock, "Status"),
+        syncKey: getFirstTagText(collectionBlock, "SyncKey"),
+        itemStatuses: itemStatuses
+    )
+}
+
+func parseSimpleCommandStatusXml(_ xml: String) -> CommandStatusResult {
+    CommandStatusResult(status: getFirstTagText(xml, "Status"), syncKey: "", itemStatuses: [:])
+}
+
+func parseItemOperationsFetchXml(_ xml: String) -> ItemOperationsFetchResult {
+    let fetchBlock = getAllTagBlocks(xml, "Fetch").first ?? xml
+    let properties = getAllTagBlocks(fetchBlock, "Properties").first ?? fetchBlock
+    let bodyBlock = getAllTagBlocks(properties, "Body").first ?? ""
+    let dataText = getFirstTagText(properties, "Data")
+    let decodedData = Data(base64Encoded: dataText) ?? dataText.data(using: .utf8)
+
+    return ItemOperationsFetchResult(
+        status: getFirstTagText(fetchBlock, "Status").isEmpty ? getFirstTagText(xml, "Status") : getFirstTagText(fetchBlock, "Status"),
+        body: parseMailBody(bodyBlock),
+        attachments: parseMailAttachments(properties),
+        data: decodedData,
+        fileName: getFirstTagText(properties, "DisplayName"),
+        contentType: getFirstTagText(properties, "ContentType")
+    )
+}
+
+private func parseMailBody(_ bodyBlock: String) -> MailBody? {
+    guard !bodyBlock.isEmpty else { return nil }
+    let bodyType: MailBodyType
+    switch getFirstTagText(bodyBlock, "Type") {
+    case "1": bodyType = .plain
+    case "2": bodyType = .html
+    case "4": bodyType = .mime
+    default: bodyType = .unknown
+    }
+    return MailBody(
+        type: bodyType,
+        data: getFirstTagText(bodyBlock, "Data"),
+        isTruncated: getFirstTagText(bodyBlock, "Truncated") == "1"
+    )
+}
+
+private func parseMailAttachments(_ applicationData: String) -> [MailAttachment] {
+    let attachmentBlocks = getAllTagBlocks(applicationData, "Attachment")
+    return attachmentBlocks.compactMap { block in
+        let displayName = getFirstTagText(block, "DisplayName")
+        let fileReference = getFirstTagText(block, "FileReference")
+        guard !displayName.isEmpty || !fileReference.isEmpty else { return nil }
+        return MailAttachment(
+            displayName: displayName.isEmpty ? "Вложение" : displayName,
+            fileReference: fileReference,
+            estimatedSize: Int(getFirstTagText(block, "EstimatedDataSize")),
+            contentType: getFirstTagText(block, "ContentType").isEmpty ? nil : getFirstTagText(block, "ContentType"),
+            isInline: getFirstTagText(block, "IsInline") == "1"
+        )
+    }
+}
+
 private func parseEmailContact(_ raw: String) -> CalendarOrganizer? {
     let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return nil }
@@ -521,6 +708,30 @@ private func parseEmailContact(_ raw: String) -> CalendarOrganizer? {
         return CalendarOrganizer(name: trimmed, email: trimmed)
     }
     return CalendarOrganizer(name: trimmed, email: "")
+}
+
+private func parseMailAddressList(_ raw: String) -> [MailAddress] {
+    raw.split(separator: ";").compactMap { parseMailAddress(String($0)) }
+}
+
+private func parseMailAddress(_ raw: String) -> MailAddress? {
+    let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else { return nil }
+
+    if let regex = try? NSRegularExpression(pattern: #"\"?([^\"<]*)\"?\s*<([^>]+)>"#),
+       let match = regex.firstMatch(in: trimmed, range: NSRange(trimmed.startIndex..<trimmed.endIndex, in: trimmed)),
+       let nameRange = Range(match.range(at: 1), in: trimmed),
+       let emailRange = Range(match.range(at: 2), in: trimmed) {
+        return MailAddress(
+            name: String(trimmed[nameRange]).trimmingCharacters(in: .whitespacesAndNewlines),
+            email: String(trimmed[emailRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+        )
+    }
+
+    if trimmed.contains("@") {
+        return MailAddress(name: "", email: trimmed)
+    }
+    return MailAddress(name: trimmed, email: "")
 }
 
 func sortCalendarEventsByStart(_ events: [NormalizedCalendarEvent]) -> [NormalizedCalendarEvent] {

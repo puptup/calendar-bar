@@ -30,6 +30,13 @@
 		A10000000000000000000017 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000020 /* AboutView.swift */; };
 		A1000000000000000000001B /* PopoverMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000024 /* PopoverMetrics.swift */; };
 		A1000000000000000000001C /* LaunchAtLoginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000025 /* LaunchAtLoginService.swift */; };
+		A1000000000000000000001D /* MailMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000026 /* MailMessage.swift */; };
+		A1000000000000000000001E /* MailSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000027 /* MailSyncService.swift */; };
+		A1000000000000000000001F /* MailStatusBarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000028 /* MailStatusBarManager.swift */; };
+		A10000000000000000000020 /* MailContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000029 /* MailContentView.swift */; };
+		A10000000000000000000021 /* MailListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002A /* MailListView.swift */; };
+		A10000000000000000000022 /* MailDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002B /* MailDetailView.swift */; };
+		A10000000000000000000023 /* MailComposeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002C /* MailComposeView.swift */; };
 		A1000000000000000000000E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000E /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -56,6 +63,13 @@
 		A20000000000000000000021 /* DayTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayTimelineView.swift; sourceTree = "<group>"; };
 		A20000000000000000000024 /* PopoverMetrics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverMetrics.swift; sourceTree = "<group>"; };
 		A20000000000000000000025 /* LaunchAtLoginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginService.swift; sourceTree = "<group>"; };
+		A20000000000000000000026 /* MailMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailMessage.swift; sourceTree = "<group>"; };
+		A20000000000000000000027 /* MailSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailSyncService.swift; sourceTree = "<group>"; };
+		A20000000000000000000028 /* MailStatusBarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailStatusBarManager.swift; sourceTree = "<group>"; };
+		A20000000000000000000029 /* MailContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailContentView.swift; sourceTree = "<group>"; };
+		A2000000000000000000002A /* MailListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailListView.swift; sourceTree = "<group>"; };
+		A2000000000000000000002B /* MailDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailDetailView.swift; sourceTree = "<group>"; };
+		A2000000000000000000002C /* MailComposeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailComposeView.swift; sourceTree = "<group>"; };
 		A20000000000000000000020 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		A2000000000000000000000E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A2000000000000000000000F /* CalendarBar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CalendarBar.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -87,6 +101,7 @@
 			children = (
 				A20000000000000000000001 /* CalendarBarApp.swift */,
 				A20000000000000000000019 /* StatusBarManager.swift */,
+				A20000000000000000000028 /* MailStatusBarManager.swift */,
 				A20000000000000000000024 /* PopoverMetrics.swift */,
 				A40000000000000000000004 /* Models */,
 				A40000000000000000000005 /* Services */,
@@ -110,6 +125,7 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000006 /* CalendarEvent.swift */,
+				A20000000000000000000026 /* MailMessage.swift */,
 				A20000000000000000000007 /* AccountSettings.swift */,
 			);
 			path = Models;
@@ -123,6 +139,7 @@
 				A40000000000000000000007 /* ActiveSync */,
 				A2000000000000000000000B /* ExchangeClient.swift */,
 				A2000000000000000000000C /* CalendarSyncService.swift */,
+				A20000000000000000000027 /* MailSyncService.swift */,
 				A2000000000000000000000D /* NotificationService.swift */,
 				A20000000000000000000025 /* LaunchAtLoginService.swift */,
 			);
@@ -148,6 +165,10 @@
 				A20000000000000000000003 /* AuthView.swift */,
 				A20000000000000000000004 /* EventsListView.swift */,
 				A20000000000000000000005 /* EventDetailView.swift */,
+				A20000000000000000000029 /* MailContentView.swift */,
+				A2000000000000000000002A /* MailListView.swift */,
+				A2000000000000000000002B /* MailDetailView.swift */,
+				A2000000000000000000002C /* MailComposeView.swift */,
 				A20000000000000000000020 /* AboutView.swift */,
 				A20000000000000000000021 /* DayTimelineView.swift */,
 				A20000000000000000000016 /* LinkDetectingText.swift */,
@@ -227,14 +248,20 @@
 			files = (
 				A10000000000000000000001 /* CalendarBarApp.swift in Sources */,
 				A10000000000000000000014 /* StatusBarManager.swift in Sources */,
+				A1000000000000000000001F /* MailStatusBarManager.swift in Sources */,
 				A10000000000000000000002 /* ContentView.swift in Sources */,
 				A10000000000000000000003 /* AuthView.swift in Sources */,
 				A10000000000000000000004 /* EventsListView.swift in Sources */,
 				A10000000000000000000005 /* EventDetailView.swift in Sources */,
+				A10000000000000000000020 /* MailContentView.swift in Sources */,
+				A10000000000000000000021 /* MailListView.swift in Sources */,
+				A10000000000000000000022 /* MailDetailView.swift in Sources */,
+				A10000000000000000000023 /* MailComposeView.swift in Sources */,
 				A10000000000000000000017 /* AboutView.swift in Sources */,
 				A10000000000000000000018 /* DayTimelineView.swift in Sources */,
 				A10000000000000000000016 /* LinkDetectingText.swift in Sources */,
 				A10000000000000000000006 /* CalendarEvent.swift in Sources */,
+				A1000000000000000000001D /* MailMessage.swift in Sources */,
 				A10000000000000000000007 /* AccountSettings.swift in Sources */,
 				A10000000000000000000008 /* KeychainService.swift in Sources */,
 				A10000000000000000000009 /* SettingsStore.swift in Sources */,
@@ -245,6 +272,7 @@
 				A10000000000000000000012 /* RecurrenceExpander.swift in Sources */,
 				A10000000000000000000013 /* ActiveSyncSyncKeyStore.swift in Sources */,
 				A1000000000000000000000C /* CalendarSyncService.swift in Sources */,
+				A1000000000000000000001E /* MailSyncService.swift in Sources */,
 				A1000000000000000000000D /* NotificationService.swift in Sources */,
 				A1000000000000000000001B /* PopoverMetrics.swift in Sources */,
 				A1000000000000000000001C /* LaunchAtLoginService.swift in Sources */,

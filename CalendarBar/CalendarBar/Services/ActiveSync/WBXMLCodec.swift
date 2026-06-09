@@ -95,7 +95,11 @@ enum WBXMLCodec {
             "FolderCreate": 0x13, "FolderDelete": 0x14, "FolderUpdate": 0x15, "FolderSync": 0x16,
             "Count": 0x17
         ]),
-        CodePage(namespace: "MeetingResponse", tokens: [:]),
+        CodePage(namespace: "MeetingResponse", tokens: [
+            "CalendarId": 0x05, "CollectionId": 0x06, "MeetingResponse": 0x07,
+            "RequestId": 0x08, "Request": 0x09, "Result": 0x0a, "Status": 0x0b,
+            "UserResponse": 0x0c, "InstanceId": 0x0e
+        ]),
         CodePage(namespace: "Tasks", tokens: [:]),
         CodePage(namespace: "ResolveRecipients", tokens: [:]),
         CodePage(namespace: "ValidateCert", tokens: [:]),
@@ -141,8 +145,21 @@ enum WBXMLCodec {
             "PhoneNumber": 0x1c, "UserAgent": 0x20, "MobileOperator": 0x22
         ]),
         CodePage(namespace: "DocumentLibrary", tokens: [:]),
-        CodePage(namespace: "ItemOperations", tokens: [:]),
-        CodePage(namespace: "ComposeMail", tokens: [:]),
+        CodePage(namespace: "ItemOperations", tokens: [
+            "ItemOperations": 0x05, "Fetch": 0x06, "Store": 0x07, "Options": 0x08,
+            "Range": 0x09, "Total": 0x0a, "Properties": 0x0b, "Data": 0x0c,
+            "Status": 0x0d, "Response": 0x0e, "Version": 0x0f, "Schema": 0x10,
+            "Part": 0x11, "EmptyFolderContents": 0x12, "DeleteSubFolders": 0x13,
+            "UserName": 0x14, "Password": 0x15, "Move": 0x16, "DstFldId": 0x17,
+            "ConversationId": 0x18, "MoveAlways": 0x19
+        ]),
+        CodePage(namespace: "ComposeMail", tokens: [
+            "SendMail": 0x05, "SmartForward": 0x06, "SmartReply": 0x07,
+            "SaveInSentItems": 0x08, "ReplaceMime": 0x09, "Type": 0x0a,
+            "Source": 0x0b, "FolderId": 0x0c, "ItemId": 0x0d, "LongId": 0x0e,
+            "InstanceId": 0x0f, "MIME": 0x10, "ClientId": 0x11, "Status": 0x12,
+            "AccountId": 0x13
+        ]),
         CodePage(namespace: "Email2", tokens: [
             "UmCallerID": 0x05, "UmUserNotes": 0x06, "UmAttDuration": 0x07, "UmAttOrder": 0x08,
             "ConversationId": 0x09, "ConversationIndex": 0x0a, "LastVerbExecuted": 0x0b,
@@ -438,7 +455,9 @@ enum WBXMLCodec {
     }
 
     private static func prefixToNamespace(_ prefix: String) -> String {
+        if prefix == "airsync" { return "AirSync" }
         if prefix == "airsyncbase" { return "AirSyncBase" }
+        if prefix == "composemail" { return "ComposeMail" }
         if prefix == "settings" { return "Settings" }
         guard let first = prefix.first else { return prefix }
         return String(first).uppercased() + prefix.dropFirst()

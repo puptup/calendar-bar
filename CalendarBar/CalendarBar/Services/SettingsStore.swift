@@ -11,6 +11,7 @@ final class SettingsStore: ObservableObject {
         static let syncInterval = "syncIntervalMinutes"
         static let notifyMinutes = "notifyMinutesBefore"
         static let launchAtLogin = "launchAtLogin"
+        static let mailEnabled = "mailEnabled"
     }
 
     @Published var account: AccountSettings {
@@ -31,6 +32,10 @@ final class SettingsStore: ObservableObject {
 
     @Published private(set) var launchAtLogin = false
 
+    @Published var mailEnabled: Bool {
+        didSet { UserDefaults.standard.set(mailEnabled, forKey: Keys.mailEnabled) }
+    }
+
     private init() {
         if let data = UserDefaults.standard.data(forKey: Keys.account),
            var decoded = try? JSONDecoder().decode(AccountSettings.self, from: data) {
@@ -42,9 +47,11 @@ final class SettingsStore: ObservableObject {
             account = .empty
         }
         isLoggedIn = UserDefaults.standard.bool(forKey: Keys.isLoggedIn)
-        syncIntervalMinutes = UserDefaults.standard.object(forKey: Keys.syncInterval) as? Int ?? 5
+        let storedSyncInterval = UserDefaults.standard.object(forKey: Keys.syncInterval) as? Int ?? 5
+        syncIntervalMinutes = storedSyncInterval <= 0 ? 5 : storedSyncInterval
         notifyMinutesBefore = UserDefaults.standard.object(forKey: Keys.notifyMinutes) as? Int ?? 15
         launchAtLogin = UserDefaults.standard.object(forKey: Keys.launchAtLogin) as? Bool ?? false
+        mailEnabled = UserDefaults.standard.object(forKey: Keys.mailEnabled) as? Bool ?? true
     }
 
     func refreshLaunchAtLoginStatus() {

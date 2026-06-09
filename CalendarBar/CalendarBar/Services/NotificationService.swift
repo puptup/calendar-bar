@@ -13,6 +13,7 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
     static let shared = NotificationService()
 
     static let eventCategoryIdentifier = "CALENDAR_EVENT"
+    static let mailCategoryIdentifier = "MAIL_MESSAGE"
 
     @Published private(set) var isAuthorized = false
     @Published private(set) var authorizationState: NotificationAuthorizationState = .notDetermined
@@ -39,7 +40,13 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
             intentIdentifiers: [],
             options: [.customDismissAction]
         )
-        UNUserNotificationCenter.current().setNotificationCategories([category])
+        let mailCategory = UNNotificationCategory(
+            identifier: Self.mailCategoryIdentifier,
+            actions: [dismissAction],
+            intentIdentifiers: [],
+            options: [.customDismissAction]
+        )
+        UNUserNotificationCenter.current().setNotificationCategories([category, mailCategory])
     }
 
     func refreshAuthorizationStatus() async {
@@ -136,6 +143,35 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
         )
     }
 
+    func deliverNewMailNotification(for message: MailMessage) async throws {
+        await refreshAuthorizationStatus()
+        guard authorizationState == .authorized else {
+            throw ExchangeError.activeSync("Уведомления CalendarBar не разрешены в macOS.")
+        }
+
+        let content = UNMutableNotificationContent()
+        content.title = message.displaySubject
+        content.subtitle = message.from?.displayName ?? "Новое письмо"
+        content.body = mailNotificationBody(for: message)
+        content.sound = .default
+        content.categoryIdentifier = Self.mailCategoryIdentifier
+        content.userInfo = [
+            "kind": "mail",
+            "messageId": message.id,
+            "folder": MailFolderKind.inbox.rawValue,
+            "subject": message.displaySubject
+        ]
+        applyPersistentNotificationOptions(to: content)
+
+        let request = UNNotificationRequest(
+            identifier: mailNotificationIdentifier(for: message),
+            content: content,
+            trigger: UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        )
+
+        try await UNUserNotificationCenter.current().add(request)
+    }
+
     func cancelAllPendingNotifications() {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         scheduledCount = 0
@@ -159,6 +195,12 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
         if response.actionIdentifier == UNNotificationDismissActionIdentifier
             || response.actionIdentifier == "DISMISS" {
             center.removeDeliveredNotifications(withIdentifiers: [response.notification.request.identifier])
+        } else if response.notification.request.content.categoryIdentifier == Self.mailCategoryIdentifier,
+                  let messageId = response.notification.request.content.userInfo["messageId"] as? String {
+            Task { @MainActor in
+                MailSyncService.shared.focusMessage(id: messageId, folder: .inbox)
+                MailStatusBarManager.shared.showPanel()
+            }
         }
         completionHandler()
     }
@@ -170,6 +212,10 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
 
     private func notificationIdentifier(for event: CalendarEvent) -> String {
         "event-\(event.id)"
+    }
+
+    private func mailNotificationIdentifier(for message: MailMessage) -> String {
+        "mail-\(message.id)"
     }
 
     private func payload(for event: CalendarEvent, minutesBefore: Int) -> [AnyHashable: Any] {
@@ -207,5 +253,11 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
             parts.append(location)
         }
         return parts.joined(separator: "\n")
+    }
+
+    private func mailNotificationBody(for message: MailMessage) -> String {
+        let text = message.displayBodyText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return "Откройте письмо в CalendarBar" }
+        return String(text.prefix(180))
     }
 }

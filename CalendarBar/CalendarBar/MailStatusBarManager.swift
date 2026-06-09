@@ -2,21 +2,18 @@ import AppKit
 import SwiftUI
 
 @MainActor
-final class StatusBarManager: NSObject, NSPopoverDelegate {
-    static let shared = StatusBarManager()
+final class MailStatusBarManager: NSObject, NSPopoverDelegate {
+    static let shared = MailStatusBarManager()
 
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
     private var popoverSizeObserver: NSObjectProtocol?
-    private var lastPopoverSize = NSSize(
-        width: PopoverMetrics.timelineWidth,
-        height: PopoverMetrics.height
-    )
+    private var lastPopoverSize = NSSize(width: MailPopoverMetrics.listWidth, height: MailPopoverMetrics.height)
 
     private override init() {
         super.init()
         popoverSizeObserver = NotificationCenter.default.addObserver(
-            forName: .popoverSizeChanged,
+            forName: .mailPopoverSizeChanged,
             object: nil,
             queue: .main
         ) { [weak self] notification in
@@ -36,7 +33,7 @@ final class StatusBarManager: NSObject, NSPopoverDelegate {
 
     func install() {
         guard statusItem == nil else {
-            updateLabel()
+            updateIcon()
             return
         }
 
@@ -49,11 +46,22 @@ final class StatusBarManager: NSObject, NSPopoverDelegate {
         updateIcon()
     }
 
+    func uninstall() {
+        if let popover, popover.isShown {
+            popover.performClose(nil)
+        }
+        popover = nil
+        if let statusItem {
+            NSStatusBar.system.removeStatusItem(statusItem)
+        }
+        statusItem = nil
+        lastPopoverSize = NSSize(width: MailPopoverMetrics.listWidth, height: MailPopoverMetrics.height)
+    }
+
     func updateIcon() {
         guard let button = statusItem?.button else { return }
-
         let store = SettingsStore.shared
-        let imageName = store.isLoggedIn ? "calendar" : "calendar.badge.plus"
+        let imageName = store.isLoggedIn ? "envelope" : "envelope.badge"
         button.image = menuBarImage(named: imageName)
         button.imagePosition = .imageLeading
     }
@@ -63,13 +71,9 @@ final class StatusBarManager: NSObject, NSPopoverDelegate {
         button.title = title.isEmpty ? "" : " \(title)"
     }
 
-    func updateLabel() {
-        updateIcon()
-    }
-
     private func menuBarImage(named symbolName: String) -> NSImage? {
         let config = NSImage.SymbolConfiguration(pointSize: 13, weight: .regular)
-        guard let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "CalendarBar")?
+        guard let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "CalendarBar Mail")?
             .withSymbolConfiguration(config) else { return nil }
         image.isTemplate = true
         return image
@@ -83,24 +87,33 @@ final class StatusBarManager: NSObject, NSPopoverDelegate {
             return
         }
 
+        showPanel(relativeTo: button)
+    }
+
+    func showPanel() {
+        guard let button = statusItem?.button else { return }
+        showPanel(relativeTo: button)
+    }
+
+    private func showPanel(relativeTo button: NSStatusBarButton) {
         let popover = ensurePopover()
+        if popover.isShown {
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         NSApp.activate(ignoringOtherApps: true)
     }
 
     func popoverDidShow(_ notification: Notification) {
         SettingsStore.shared.refreshLaunchAtLoginStatus()
-        NotificationCenter.default.post(name: .timelineScrollRequested, object: nil)
     }
 
     private func ensurePopover() -> NSPopover {
         if let popover { return popover }
 
         let popover = NSPopover()
-        popover.contentSize = NSSize(
-            width: PopoverMetrics.timelineWidth,
-            height: PopoverMetrics.height
-        )
+        popover.contentSize = NSSize(width: MailPopoverMetrics.listWidth, height: MailPopoverMetrics.height)
         popover.behavior = .transient
         popover.animates = true
         popover.delegate = self
@@ -110,12 +123,12 @@ final class StatusBarManager: NSObject, NSPopoverDelegate {
     }
 
     private func makePopoverViewController() -> NSViewController {
-        let hostingController = NSHostingController(rootView: ContentView())
+        let hostingController = NSHostingController(rootView: MailContentView())
         hostingController.view.frame = NSRect(
             x: 0,
             y: 0,
-            width: PopoverMetrics.timelineWidth,
-            height: PopoverMetrics.height
+            width: MailPopoverMetrics.listWidth,
+            height: MailPopoverMetrics.height
         )
         hostingController.view.wantsLayer = true
         hostingController.view.layer?.backgroundColor = NSColor.clear.cgColor
@@ -164,25 +177,5 @@ final class StatusBarManager: NSObject, NSPopoverDelegate {
             effectView.frame.size = size
             effectView.subviews.first?.frame = effectView.bounds
         }
-    }
-}
-
-final class AppDelegate: NSObject, NSApplicationDelegate {
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.accessory)
-        SettingsStore.shared.applyLaunchAtLoginPreference()
-        StatusBarManager.shared.install()
-        _ = CalendarSyncService.shared
-        _ = MailSyncService.shared
-        Task {
-            NotificationService.shared.configure()
-            await NotificationService.shared.requestAuthorization()
-        }
-    }
-
-    func applicationWillTerminate(_ notification: Notification) {
-        CalendarSyncService.shared.stopPeriodicSync()
-        MailSyncService.shared.stopPeriodicSync()
-        NotificationService.shared.cancelAllPendingNotifications()
     }
 }

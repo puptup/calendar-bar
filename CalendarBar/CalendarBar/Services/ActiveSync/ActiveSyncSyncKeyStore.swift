@@ -10,6 +10,7 @@ final class ActiveSyncSyncKeyStore {
 
     private let defaults = UserDefaults.standard
     private let prefix = "activeSyncSyncKeys."
+    private let mailFolderPrefix = "activeSyncMailFolderSyncKeys."
 
     private init() {}
 
@@ -28,9 +29,41 @@ final class ActiveSyncSyncKeyStore {
         defaults.set(data, forKey: prefix + accountKey)
     }
 
+    func updateCalendar(_ syncKey: String, accountKey: String) {
+        var keys = load(accountKey: accountKey)
+        keys.calendar = syncKey
+        save(keys, accountKey: accountKey)
+    }
+
+    func updateInbox(_ syncKey: String, accountKey: String) {
+        var keys = load(accountKey: accountKey)
+        keys.inbox = syncKey
+        save(keys, accountKey: accountKey)
+    }
+
+    func loadMailFolderKeys(accountKey: String) -> [String: String] {
+        guard !accountKey.isEmpty,
+              let stored = defaults.dictionary(forKey: mailFolderPrefix + accountKey) as? [String: String] else {
+            return [:]
+        }
+        return stored
+    }
+
+    func mailFolderSyncKey(accountKey: String, collectionId: String) -> String {
+        loadMailFolderKeys(accountKey: accountKey)[collectionId] ?? "0"
+    }
+
+    func updateMailFolder(_ syncKey: String, accountKey: String, collectionId: String) {
+        guard !accountKey.isEmpty, !collectionId.isEmpty else { return }
+        var keys = loadMailFolderKeys(accountKey: accountKey)
+        keys[collectionId] = syncKey
+        defaults.set(keys, forKey: mailFolderPrefix + accountKey)
+    }
+
     func reset(accountKey: String) {
         guard !accountKey.isEmpty else { return }
         defaults.removeObject(forKey: prefix + accountKey)
+        defaults.removeObject(forKey: mailFolderPrefix + accountKey)
     }
 }
 

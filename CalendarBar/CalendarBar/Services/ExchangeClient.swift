@@ -22,6 +22,46 @@ final class ExchangeClient {
         try await client.testConnection()
     }
 
+    func fetchInboxMessages() async throws -> MailSyncSnapshot {
+        try await client.getInboxMessages()
+    }
+
+    func fetchMailMessages(folder: MailFolderKind) async throws -> MailSyncSnapshot {
+        try await client.getMailMessages(folder: folder)
+    }
+
+    func fetchMessageBody(for message: MailMessage) async throws -> MailBody? {
+        try await client.fetchMessageBody(collectionId: message.collectionId, serverId: message.serverId)
+    }
+
+    func fetchAttachment(_ attachment: MailAttachment) async throws -> ItemOperationsFetchResult {
+        try await client.fetchAttachment(fileReference: attachment.fileReference)
+    }
+
+    func setMessageRead(_ message: MailMessage, read: Bool) async throws {
+        try await client.setMessageRead(collectionId: message.collectionId, serverId: message.serverId, read: read)
+    }
+
+    func sendMail(to: [MailAddress], cc: [MailAddress], subject: String, body: String) async throws {
+        try await client.sendMail(to: to, cc: cc, subject: subject, body: body)
+    }
+
+    func reply(to message: MailMessage, body: String, replyAll: Bool) async throws {
+        try await client.smartReply(message: message, body: body, replyAll: replyAll)
+    }
+
+    func forward(message: MailMessage, to: [MailAddress], body: String) async throws {
+        try await client.smartForward(message: message, to: to, body: body)
+    }
+
+    func respondToMeeting(eventId: String, action: MeetingAction) async throws {
+        try await client.respondToMeeting(serverId: eventId, action: action)
+    }
+
+    func deleteCalendarEvent(eventId: String) async throws {
+        try await client.deleteCalendarEvent(serverId: eventId)
+    }
+
     var deviceId: String {
         client.currentDeviceId
     }

@@ -228,6 +228,8 @@ struct EventsListView: View {
                     set: { store.setLaunchAtLogin($0) }
                 ))
                 Divider()
+                Toggle("Почта", isOn: $store.mailEnabled)
+                Divider()
                 Button("О приложении") {
                     showAbout = true
                 }

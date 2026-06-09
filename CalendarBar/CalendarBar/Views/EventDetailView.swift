@@ -56,8 +56,12 @@ struct AggregatedEventsSidePanel: View {
 }
 
 struct EventDetailSidePanel: View {
+    @ObservedObject private var sync = CalendarSyncService.shared
     let event: CalendarEvent
     var onClose: () -> Void
+    @State private var actionError: String?
+    @State private var actionInProgress = false
+    @State private var confirmingDelete = false
 
     var body: some View {
         ScrollView {
@@ -81,6 +85,8 @@ struct EventDetailSidePanel: View {
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(.orange)
                 }
+
+                meetingActions
 
                 detailRow(icon: "clock", title: "Время", value: timeText)
 
@@ -114,6 +120,52 @@ struct EventDetailSidePanel: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxHeight: .infinity)
+        .confirmationDialog(
+            "Удалить встречу из календаря?",
+            isPresented: $confirmingDelete,
+            titleVisibility: .visible
+        ) {
+            Button("Удалить", role: .destructive) {
+                Task { await performDelete() }
+            }
+            Button("Отмена", role: .cancel) {}
+        }
+    }
+
+    private var meetingActions: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Button("Принять") {
+                    Task { await performResponse(.accept) }
+                }
+                Button("Под вопросом") {
+                    Task { await performResponse(.tentative) }
+                }
+                Button("Отклонить") {
+                    Task { await performResponse(.decline) }
+                }
+                Button("Удалить", role: .destructive) {
+                    confirmingDelete = true
+                }
+            }
+            .buttonStyle(.borderless)
+            .controlSize(.small)
+            .font(.caption)
+            .disabled(actionInProgress || event.responseStatus == .organizer)
+
+            if event.responseStatus == .organizer {
+                Text("Вы организатор этой встречи")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+
+            if let actionError {
+                Text(actionError)
+                    .font(.caption2)
+                    .foregroundStyle(.red)
+                    .lineLimit(2)
+            }
+        }
     }
 
     private var attendeesSection: some View {
@@ -162,6 +214,31 @@ struct EventDetailSidePanel: View {
             Text(value)
                 .font(.body)
                 .textSelection(.enabled)
+        }
+    }
+
+    private func performResponse(_ action: MeetingAction) async {
+        actionInProgress = true
+        actionError = nil
+        defer { actionInProgress = false }
+
+        do {
+            try await sync.respond(to: event, action: action)
+        } catch {
+            actionError = error.localizedDescription
+        }
+    }
+
+    private func performDelete() async {
+        actionInProgress = true
+        actionError = nil
+        defer { actionInProgress = false }
+
+        do {
+            try await sync.delete(event)
+            onClose()
+        } catch {
+            actionError = error.localizedDescription
         }
     }
 }
