@@ -107,11 +107,15 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
 
         let now = Date()
         let deliveredKeys = deliveredReminderKeys()
+        var scheduledKeys = Set<String>()
         var scheduled = 0
 
         for event in events where event.startDate > now {
             let notifyAt = event.startDate.addingTimeInterval(-Double(minutesBefore * 60))
             let reminderKey = reminderKey(for: event, minutesBefore: minutesBefore)
+            guard scheduledKeys.insert(reminderKey).inserted else {
+                continue
+            }
             guard notifyAt > now || !deliveredKeys.contains(reminderKey) else {
                 continue
             }
@@ -232,12 +236,20 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
     }
 
     private func notificationIdentifier(for event: CalendarEvent) -> String {
-        "event-\(event.id)"
+        "event-\(reminderKey(for: event, minutesBefore: SettingsStore.shared.notifyMinutesBefore))"
     }
 
     private func reminderKey(for event: CalendarEvent, minutesBefore: Int) -> String {
         let start = Int(event.startDate.timeIntervalSince1970)
-        return "\(event.id)|\(start)|\(minutesBefore)"
+        let subject = event.subject
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+        let location = (event.location ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+        return "\(start)|\(minutesBefore)|\(subject.prefix(120))|\(location.prefix(80))"
     }
 
     private func mailNotificationIdentifier(for message: MailMessage) -> String {
