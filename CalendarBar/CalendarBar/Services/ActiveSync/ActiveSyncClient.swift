@@ -51,6 +51,7 @@ final class ActiveSyncClient: NSObject, URLSessionDelegate, @unchecked Sendable 
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 60
         config.timeoutIntervalForResource = 120
+        config.waitsForConnectivity = true
         config.httpShouldSetCookies = true
         config.httpCookieAcceptPolicy = .always
         return URLSession(configuration: config, delegate: self, delegateQueue: nil)
@@ -724,6 +725,7 @@ final class ActiveSyncClient: NSObject, URLSessionDelegate, @unchecked Sendable 
         for candidate in candidates {
             var request = URLRequest(url: URL(string: candidate)!)
             request.httpMethod = "OPTIONS"
+            request.timeoutInterval = 15
             request.setValue(Self.defaultUserAgent, forHTTPHeaderField: "User-Agent")
             request.setValue(Self.defaultProtocolVersion, forHTTPHeaderField: "MS-ASProtocolVersion")
             request.setValue(basicAuthHeader(), forHTTPHeaderField: "Authorization")
@@ -746,7 +748,11 @@ final class ActiveSyncClient: NSObject, URLSessionDelegate, @unchecked Sendable 
             }
         }
 
-        throw ExchangeError.activeSync("Unable to discover a working ActiveSync endpoint.")
+        if let fallback = candidates.first {
+            return DiscoveryResult(endpoint: fallback, attempts: attempts)
+        }
+
+        throw ExchangeError.activeSync("Не удалось определить ActiveSync endpoint.")
     }
 
     private func createDiscoveryCandidates() -> [String] {
@@ -820,7 +826,7 @@ final class ActiveSyncClient: NSObject, URLSessionDelegate, @unchecked Sendable 
         do {
             (data, response) = try await session.data(for: request)
         } catch {
-            throw ExchangeError.activeSync("Network or TLS failure calling \(command): \(error.localizedDescription)")
+            throw ExchangeError.activeSync(networkMessage(for: error))
         }
 
         guard let http = response as? HTTPURLResponse else {
@@ -850,6 +856,21 @@ final class ActiveSyncClient: NSObject, URLSessionDelegate, @unchecked Sendable 
         case 403: return "device-blocked"
         case 404: return "endpoint-not-found"
         default: return status >= 400 ? "protocol-error" : "unknown"
+        }
+    }
+
+    private func networkMessage(for error: Error) -> String {
+        let nsError = error as NSError
+        switch nsError.code {
+        case NSURLErrorNotConnectedToInternet,
+             NSURLErrorNetworkConnectionLost,
+             NSURLErrorTimedOut,
+             NSURLErrorCannotFindHost,
+             NSURLErrorCannotConnectToHost,
+             NSURLErrorDNSLookupFailed:
+            return error.localizedDescription
+        default:
+            return error.localizedDescription
         }
     }
 

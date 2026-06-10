@@ -103,6 +103,10 @@ final class MailSyncService: ObservableObject {
         await sync(folder: selectedFolder, notifyNew: true)
     }
 
+    func syncInboxForNetworkRecovery() async {
+        await sync(folder: .inbox, notifyNew: true)
+    }
+
     func selectFolder(_ folder: MailFolderKind) {
         selectedFolder = folder
         selectedMessageId = nil

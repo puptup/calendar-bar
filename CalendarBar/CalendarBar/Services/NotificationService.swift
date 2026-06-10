@@ -19,6 +19,9 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
     @Published private(set) var authorizationState: NotificationAuthorizationState = .notDetermined
     @Published private(set) var scheduledCount = 0
 
+    private let defaults = UserDefaults.standard
+    private let deliveredReminderKeysKey = "deliveredCalendarReminderKeys"
+
     private override init() {
         super.init()
     }
@@ -95,7 +98,7 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
         await refreshAuthorizationStatus()
 
         let center = UNUserNotificationCenter.current()
-        center.removeAllPendingNotificationRequests()
+        await removePendingCalendarNotifications(center: center)
 
         guard authorizationState == .authorized else {
             scheduledCount = 0
@@ -103,10 +106,16 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
         }
 
         let now = Date()
+        let deliveredKeys = deliveredReminderKeys()
         var scheduled = 0
 
         for event in events where event.startDate > now {
             let notifyAt = event.startDate.addingTimeInterval(-Double(minutesBefore * 60))
+            let reminderKey = reminderKey(for: event, minutesBefore: minutesBefore)
+            guard notifyAt > now || !deliveredKeys.contains(reminderKey) else {
+                continue
+            }
+
             guard let trigger = makeTrigger(notifyAt: notifyAt, eventStart: event.startDate, now: now) else {
                 continue
             }
@@ -127,6 +136,9 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
 
             do {
                 try await center.add(request)
+                if notifyAt <= now {
+                    markReminderDelivered(reminderKey)
+                }
                 scheduled += 1
             } catch {
                 continue
@@ -184,6 +196,10 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
+        if notification.request.content.categoryIdentifier == Self.eventCategoryIdentifier,
+           let reminderKey = notification.request.content.userInfo["reminderKey"] as? String {
+            markReminderDelivered(reminderKey)
+        }
         completionHandler([.banner, .list, .sound])
     }
 
@@ -192,6 +208,11 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
+        if response.notification.request.content.categoryIdentifier == Self.eventCategoryIdentifier,
+           let reminderKey = response.notification.request.content.userInfo["reminderKey"] as? String {
+            markReminderDelivered(reminderKey)
+        }
+
         if response.actionIdentifier == UNNotificationDismissActionIdentifier
             || response.actionIdentifier == "DISMISS" {
             center.removeDeliveredNotifications(withIdentifiers: [response.notification.request.identifier])
@@ -214,6 +235,11 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
         "event-\(event.id)"
     }
 
+    private func reminderKey(for event: CalendarEvent, minutesBefore: Int) -> String {
+        let start = Int(event.startDate.timeIntervalSince1970)
+        return "\(event.id)|\(start)|\(minutesBefore)"
+    }
+
     private func mailNotificationIdentifier(for message: MailMessage) -> String {
         "mail-\(message.id)"
     }
@@ -225,7 +251,28 @@ final class NotificationService: NSObject, ObservableObject, UNUserNotificationC
             "subject": event.subject,
             "subtitle": "Через \(minutesBefore) мин · \(event.durationText)",
             "location": event.location ?? "",
+            "reminderKey": reminderKey(for: event, minutesBefore: minutesBefore),
         ]
+    }
+
+    private func removePendingCalendarNotifications(center: UNUserNotificationCenter) async {
+        let pending = await center.pendingNotificationRequests()
+        let calendarIds = pending
+            .map(\.identifier)
+            .filter { $0.hasPrefix("event-") }
+        if !calendarIds.isEmpty {
+            center.removePendingNotificationRequests(withIdentifiers: calendarIds)
+        }
+    }
+
+    private func deliveredReminderKeys() -> Set<String> {
+        Set(defaults.stringArray(forKey: deliveredReminderKeysKey) ?? [])
+    }
+
+    private func markReminderDelivered(_ key: String) {
+        var keys = deliveredReminderKeys()
+        keys.insert(key)
+        defaults.set(Array(keys), forKey: deliveredReminderKeysKey)
     }
 
     private func makeTrigger(notifyAt: Date, eventStart: Date, now: Date) -> UNNotificationTrigger? {

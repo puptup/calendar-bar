@@ -174,6 +174,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         StatusBarManager.shared.install()
         _ = CalendarSyncService.shared
         _ = MailSyncService.shared
+        NetworkReachabilityService.shared.start()
         Task {
             NotificationService.shared.configure()
             await NotificationService.shared.requestAuthorization()
@@ -183,6 +184,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         CalendarSyncService.shared.stopPeriodicSync()
         MailSyncService.shared.stopPeriodicSync()
+        NetworkReachabilityService.shared.stop()
         NotificationService.shared.cancelAllPendingNotifications()
     }
 }

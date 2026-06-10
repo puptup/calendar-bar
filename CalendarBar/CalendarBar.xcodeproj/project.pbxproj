@@ -37,6 +37,7 @@
 		A10000000000000000000021 /* MailListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002A /* MailListView.swift */; };
 		A10000000000000000000022 /* MailDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002B /* MailDetailView.swift */; };
 		A10000000000000000000023 /* MailComposeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002C /* MailComposeView.swift */; };
+		A10000000000000000000024 /* NetworkReachabilityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002D /* NetworkReachabilityService.swift */; };
 		A1000000000000000000000E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000E /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -70,6 +71,7 @@
 		A2000000000000000000002A /* MailListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailListView.swift; sourceTree = "<group>"; };
 		A2000000000000000000002B /* MailDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailDetailView.swift; sourceTree = "<group>"; };
 		A2000000000000000000002C /* MailComposeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailComposeView.swift; sourceTree = "<group>"; };
+		A2000000000000000000002D /* NetworkReachabilityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkReachabilityService.swift; sourceTree = "<group>"; };
 		A20000000000000000000020 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		A2000000000000000000000E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A2000000000000000000000F /* CalendarBar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CalendarBar.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -141,6 +143,7 @@
 				A2000000000000000000000C /* CalendarSyncService.swift */,
 				A20000000000000000000027 /* MailSyncService.swift */,
 				A2000000000000000000000D /* NotificationService.swift */,
+				A2000000000000000000002D /* NetworkReachabilityService.swift */,
 				A20000000000000000000025 /* LaunchAtLoginService.swift */,
 			);
 			path = Services;
@@ -274,6 +277,7 @@
 				A1000000000000000000000C /* CalendarSyncService.swift in Sources */,
 				A1000000000000000000001E /* MailSyncService.swift in Sources */,
 				A1000000000000000000000D /* NotificationService.swift in Sources */,
+				A10000000000000000000024 /* NetworkReachabilityService.swift in Sources */,
 				A1000000000000000000001B /* PopoverMetrics.swift in Sources */,
 				A1000000000000000000001C /* LaunchAtLoginService.swift in Sources */,
 			);
