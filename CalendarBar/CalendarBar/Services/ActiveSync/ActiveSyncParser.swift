@@ -600,12 +600,30 @@ func mergeCalendarEventsWithInvitations(
 
 private func eventsMatch(_ lhs: NormalizedCalendarEvent, _ rhs: NormalizedCalendarEvent) -> Bool {
     if !lhs.uid.isEmpty, lhs.uid == rhs.uid { return true }
-    if !lhs.title.isEmpty,
-       lhs.title.caseInsensitiveCompare(rhs.title) == .orderedSame,
-       lhs.startAt == rhs.startAt {
+    guard normalizedEventTitle(lhs.title) == normalizedEventTitle(rhs.title) else {
+        return false
+    }
+
+    guard let lhsStart = ActiveSyncDateParser.parse(lhs.startAt),
+          let rhsStart = ActiveSyncDateParser.parse(rhs.startAt) else {
+        return lhs.startAt == rhs.startAt
+    }
+
+    let startsClose = abs(lhsStart.timeIntervalSince(rhsStart)) <= 120
+    if !startsClose { return false }
+
+    guard let lhsEnd = ActiveSyncDateParser.parse(lhs.endAt.isEmpty ? lhs.startAt : lhs.endAt),
+          let rhsEnd = ActiveSyncDateParser.parse(rhs.endAt.isEmpty ? rhs.startAt : rhs.endAt) else {
         return true
     }
-    return false
+    return abs(lhsEnd.timeIntervalSince(rhsEnd)) <= 120
+}
+
+private func normalizedEventTitle(_ value: String) -> String {
+    value
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+        .lowercased()
+        .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
 }
 
 func mapResponseStatus(responseType: String, meetingStatus: String) -> MeetingResponseStatus {

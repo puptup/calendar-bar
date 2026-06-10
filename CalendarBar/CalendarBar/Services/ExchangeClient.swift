@@ -11,7 +11,7 @@ final class ExchangeClient {
     func fetchCalendarEvents(from start: Date, to end: Date) async throws -> [CalendarEvent] {
         let normalized = try await client.getCalendarEvents()
         let expanded = expandRecurringEvents(normalized, from: start, to: end)
-        return mapAndFilterEvents(expanded, from: start, to: end)
+        return dedupeEvents(mapAndFilterEvents(expanded, from: start, to: end))
     }
 
     func fetchEventDetails(itemId: String, changeKey: String?) async throws -> CalendarEvent? {
@@ -98,5 +98,44 @@ final class ExchangeClient {
             )
         }
         .sorted { $0.startDate < $1.startDate }
+    }
+
+    private func dedupeEvents(_ events: [CalendarEvent]) -> [CalendarEvent] {
+        var deduped: [CalendarEvent] = []
+
+        for event in events {
+            if let index = deduped.firstIndex(where: { calendarEventsMatch($0, event) }) {
+                if eventQuality(event) > eventQuality(deduped[index]) {
+                    deduped[index] = event
+                }
+            } else {
+                deduped.append(event)
+            }
+        }
+
+        return deduped.sorted { $0.startDate < $1.startDate }
+    }
+
+    private func calendarEventsMatch(_ lhs: CalendarEvent, _ rhs: CalendarEvent) -> Bool {
+        normalizedCalendarTitle(lhs.subject) == normalizedCalendarTitle(rhs.subject)
+            && abs(lhs.startDate.timeIntervalSince(rhs.startDate)) <= 120
+            && abs(lhs.endDate.timeIntervalSince(rhs.endDate)) <= 120
+    }
+
+    private func eventQuality(_ event: CalendarEvent) -> Int {
+        var score = 0
+        if !(event.body ?? "").isEmpty { score += 1 }
+        if !(event.location ?? "").isEmpty { score += 1 }
+        if !(event.organizer ?? "").isEmpty { score += 2 }
+        score += min(event.attendees.count, 10) * 2
+        if event.responseStatus != .pending { score += 1 }
+        return score
+    }
+
+    private func normalizedCalendarTitle(_ value: String) -> String {
+        value
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
     }
 }
